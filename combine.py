@@ -43,9 +43,6 @@ def load_langlink(langlink,lang):
                 continue
             if lang is None or j['destination']['lang'] == lang:
                 result.append([j['source']['pageid'],j['destination']])
-
-            if len(result) > 10000:
-                break
     return result
 
 def create_training(langlink_dict,jaID_2_ene):
