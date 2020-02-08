@@ -9,15 +9,13 @@ import multiprocessing as multi
 def json_dumps(data):
     return json.dumps(data, ensure_ascii=False)
 
-def output_json(training,lang,out_path):
+def output_json(training,lang,output_dir):
+    os.makedirs(output_dir, exist_ok=True)
     for ln,training_output in training.items():
-        if lang is not None and lang != ln:
-            continue
+        file_name = '{}_ENEW_LIST.json'.format(ln)
+        file_path = os.path.join(output_dir, file_name)
 
-        lang_path = out_path if lang is not None \
-                else '{}/{}_{}'.format(os.path.dirname(out_path), ln, os.path.basename(out_path))
-
-        with open(lang_path,'w') as f, Pool(multi.cpu_count()) as p:
+        with open(file_path,'w') as f, Pool(multi.cpu_count()) as p:
             dumps = p.map(json_dumps, training_output)
             f.write('\n'.join(dumps))
             f.close()
@@ -42,24 +40,25 @@ def load_langlink(langlink,lang):
             if j['source']['lang'] != 'ja':
                 continue
             if lang is None or j['destination']['lang'] == lang:
-                result.append([j['source']['pageid'],j['destination']])
+                result.append([j['source'],j['destination']])
     return result
 
 def create_training(langlink_dict,jaID_2_ene):
     result = defaultdict(list)
     print('Creating a training data ...')
-    for source_id, destination in langlink_dict:
-        enes = jaID_2_ene.get(source_id)
+    for source, destination in langlink_dict:
+        enes = jaID_2_ene.get(source['pageid'])
         if enes is None:
             continue
         d = {'pageid':destination['pageid'],
-             'ja_pageid':source_id,
              'title':destination['title'],
+             'ja_pageid':source['pageid'],
+             'ja_title':source['title'],
              'ENEs':enes}
         result[destination['lang']].append(d)
     return result
 
-def load_data(ene_jawiki,langlink,lang=None,output=None):
+def load_data(ene_jawiki,langlink,lang=None,output_dir=None):
     jaID_2_ene = create_id_dict(ene_jawiki)
     langlink_dict = load_langlink(langlink,lang)
 
@@ -68,11 +67,5 @@ def load_data(ene_jawiki,langlink,lang=None,output=None):
 
     training = create_training(langlink_dict,jaID_2_ene)
 
-    if output is None:
-        output = 'ENEW_{}.json'.format(lang if lang is not None else 'LIST')
-    else:
-        out_dir = os.path.dirname(output)
-        os.makedirs(out_dir, exist_ok=True)
-
-    output_json(training,lang,output)
+    output_json(training,lang,output_dir)
     return training
