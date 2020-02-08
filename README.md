@@ -14,11 +14,13 @@ python3 create_training ENEW_ENEtag_20191023.json.tar.bz2\
 
 You can select language from following list.
 
-~~~
+~~~Python
 ['ar', 'bg', 'ca', 'cs', 'da', 'de', 'el', 'en', 'es', 'fa', 
  'fi', 'fr', 'he', 'hi', 'hu', 'id', 'it', 'ko', 'nl', 'no', 
  'pl', 'pt', 'ro', 'ru', 'sv', 'th', 'tr', 'uk', 'vi', 'zh']
 ~~~
+
+If you want to make training data of English.
 
 ~~~bash
 python3 create_training ENEW_ENEtag_20191023.json.tar.bz2\
