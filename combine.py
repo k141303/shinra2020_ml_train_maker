@@ -73,4 +73,3 @@ def load_data(ene_jawiki,langlink,lang=None,output=None):
     else:
         output_json(training,lang,'ENEW_{}.json'.format(lang))
     return training
-
