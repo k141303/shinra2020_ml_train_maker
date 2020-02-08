@@ -1,3 +1,4 @@
+import os
 import json
 import tarfile
 import bz2
@@ -5,18 +6,21 @@ from collections import defaultdict
 from multiprocessing import Pool
 import multiprocessing as multi
 
+def json_dumps(data):
+    return json.dumps(data, ensure_ascii=False)
+
 def output_json(training,lang,out_path):
-    if lang != 'LIST':
-        with open(out_path,'w') as f:
-            for line in training[lang]:
-                f.write(json.dumps(line)+'\n')
+    for ln,training_output in training.items():
+        if lang is not None and lang != ln:
+            continue
+
+        lang_path = out_path if lang is not None \
+                else '{}/{}_{}'.format(os.path.dirname(out_path), ln, os.path.basename(out_path))
+
+        with open(lang_path,'w') as f, Pool(multi.cpu_count()) as p:
+            dumps = p.map(json_dumps, training_output)
+            f.write('\n'.join(dumps))
             f.close()
-    else:
-        for ln,training_output in training.items():
-            with open('{}_{}'.format(ln,out_path),'w') as f:
-                for line in training_output:
-                    f.write(json.dumps(line)+'\n')
-                f.close()
 
 def create_id_dict(ene_jawiki):
     id_dict = {}
@@ -39,8 +43,10 @@ def load_langlink(langlink,lang):
                 continue
             if lang is None or j['destination']['lang'] == lang:
                 result.append([j['source']['pageid'],j['destination']])
-    return result
 
+            if len(result) > 10000:
+                break
+    return result
 
 def create_training(langlink_dict,jaID_2_ene):
     result = defaultdict(list)
@@ -53,21 +59,23 @@ def create_training(langlink_dict,jaID_2_ene):
              'ja_pageid':source_id,
              'title':destination['title'],
              'ENEs':enes}
-        result[destinations['lang']].append(d)
+        result[destination['lang']].append(d)
     return result
 
 def load_data(ene_jawiki,langlink,lang=None,output=None):
     jaID_2_ene = create_id_dict(ene_jawiki)
     langlink_dict = load_langlink(langlink,lang)
-    assert False, False
 
     if __name__ == "__main__":
         print(jaID_2_ene)
 
     training = create_training(langlink_dict,jaID_2_ene)
 
-    if not lang:
-        lang = "LIST"
-    output = output if output is not None else 'ENEW_{}.json'.format(lang)
+    if output is None:
+        output = 'ENEW_{}.json'.format(lang if lang is not None else 'LIST')
+    else:
+        out_dir = os.path.dirname(output)
+        os.makedirs(out_dir, exist_ok=True)
+
     output_json(training,lang,output)
     return training
