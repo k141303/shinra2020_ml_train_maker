@@ -3,7 +3,7 @@
 ## How to use
 
 By running the following script, you can get the learning data of all(30) languages.  
-Download the necessary data from [here](http://shinra-project.info/shinra2020ml/2020ml_data/?lang=en).
+Download the necessary data from [here](http://shinra-project.info/shinra2020ml/2020ml_data/?lang=en).(These data are in sections 1.1 and 1.2.)
 
 ~~~bash
 python3 create_training ENEW_ENEtag_20191023.json.tar.bz2\
