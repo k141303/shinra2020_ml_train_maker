@@ -10,7 +10,9 @@ python3 create_training ENEW_ENEtag_20191023.json.tar.bz2\
                         langlinks-20190120.001.json.bz2
 ~~~
 
-### Example of created training data (English)
+### Example of created training data
+
+The following json is an example of English training data created with this script.  
 
 ~~~json
 {"pageid": 59153, "title": "Ampersand", "ja_pageid": 5, "ja_title": "アンパサンド", "ENEs": {"AUTO.TOHOKU.201906": [{"prob": 0.923977792263031, "ENE_id": "0"}]}}
