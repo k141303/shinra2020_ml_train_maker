@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import tarfile
 import bz2
@@ -41,7 +42,19 @@ def load_langlink(langlink,lang):
                 continue
             if lang is None or j['destination']['lang'] == lang:
                 result.append([j['source'],j['destination']])
+
+            # DEBUG:
+            #if len(result) >= 100000:
+            #    break
     return result
+
+def select_latest_enes(enes):
+    hand = [key for key in enes if re.match("^HAND\.", key)]
+    if hand:
+        conf_key = sorted(hand, key=lambda x:x.split(".")[-1])[-1]
+    else:
+        conf_key = sorted(enes, key=lambda x:x.split(".")[-1])[-1]
+    return enes[conf_key], conf_key
 
 def create_training(langlink_dict,jaID_2_ene):
     result = defaultdict(list)
@@ -50,15 +63,41 @@ def create_training(langlink_dict,jaID_2_ene):
         enes = jaID_2_ene.get(source['pageid'])
         if enes is None:
             continue
+        enes, stamp = select_latest_enes(enes)
         d = {'pageid':destination['pageid'],
              'title':destination['title'],
              'ja_pageid':source['pageid'],
              'ja_title':source['title'],
+             '_stamp':stamp,
              'ENEs':enes}
         result[destination['lang']].append(d)
     return result
 
-def load_data(ene_jawiki,langlink,lang=None,output_dir=None):
+def load_ene_id2name(json_path):
+    ene_id2name = {}
+    with open(json_path, "r") as f:
+        data = list(map(json.loads, f))
+    for d in data:
+        ene_id2name[d["ENE_id"]] = d["name"]["en"]
+    return ene_id2name
+
+def add_ene_name(training, definition):
+    ene_id2name = load_ene_id2name(definition)
+    for lang, data in training.items():
+        for d in data:
+            for ene in d["ENEs"]:
+                ene["ENE_name"] = ene_id2name[ene["ENE_id"]]
+    return training
+
+def remove_prob(training):
+    for lang, data in training.items():
+        for d in data:
+            for ene in d["ENEs"]:
+                if ene.get("prob") is not None:
+                    del ene["prob"]
+    return training
+
+def load_data(ene_jawiki, langlink, lang=None, output_dir=None, definition=None, add_prob=False):
     jaID_2_ene = create_id_dict(ene_jawiki)
     langlink_dict = load_langlink(langlink,lang)
 
@@ -66,6 +105,11 @@ def load_data(ene_jawiki,langlink,lang=None,output_dir=None):
         print(jaID_2_ene)
 
     training = create_training(langlink_dict,jaID_2_ene)
+
+    if definition is not None:
+        training = add_ene_name(training, definition)
+    if not add_prob:
+        remove_prob(training)
 
     output_json(training,lang,output_dir)
     return training
