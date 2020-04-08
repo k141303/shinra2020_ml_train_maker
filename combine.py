@@ -80,13 +80,12 @@ def load_ene_id2name(json_path):
         ene_id2name[d["ENE_id"]] = d["name"]["en"]
     return ene_id2name
 
-def add_ene_name(training, definition):
+def add_ene_name(jaID_2_ene, definition):
     ene_id2name = load_ene_id2name(definition)
-    for lang, data in training.items():
-        for d in data:
-            for ene in d["ENEs"]:
-                ene["ENE_name"] = ene_id2name[ene["ENE_id"]]
-    return training
+    for pageid, (enes, stamp) in jaID_2_ene.items():
+        for ene in enes:
+            ene["ENE_name"] = ene_id2name[ene["ENE_id"]]
+    return jaID_2_ene
 
 def remove_prob(training):
     for lang, data in training.items():
@@ -103,10 +102,11 @@ def load_data(ene_jawiki, langlink, lang=None, output_dir=None, definition=None,
     if __name__ == "__main__":
         print(jaID_2_ene)
 
+    if definition is not None:
+        jaID_2_ene = add_ene_name(jaID_2_ene, definition)
+
     training = create_training(langlink_dict,jaID_2_ene)
 
-    if definition is not None:
-        training = add_ene_name(training, definition)
     if not add_prob:
         remove_prob(training)
 
