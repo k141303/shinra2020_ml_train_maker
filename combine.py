@@ -30,7 +30,7 @@ def create_id_dict(ene_jawiki):
             print('Opening {} ...'.format(member.name))
             f_item = taritems.extractfile(member)
             for j in p.imap_unordered(json.loads, f_item):
-                id_dict[j['pageid']] = j['ENEs']
+                id_dict[j['pageid']] = select_latest_enes(j['ENEs'])
     return id_dict
 
 def load_langlink(langlink,lang):
@@ -60,10 +60,9 @@ def create_training(langlink_dict,jaID_2_ene):
     result = defaultdict(list)
     print('Creating a training data ...')
     for source, destination in langlink_dict:
-        enes = jaID_2_ene.get(source['pageid'])
+        enes, stamp = jaID_2_ene.get(source['pageid'])
         if enes is None:
             continue
-        enes, stamp = select_latest_enes(enes)
         d = {'pageid':destination['pageid'],
              'title':destination['title'],
              'ja_pageid':source['pageid'],
